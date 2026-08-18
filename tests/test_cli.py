@@ -102,8 +102,11 @@ def test_http_stream_and_follow(tmp_path):
     assert r.exit_code == 0
     # note: table cells wrap at 80 cols under CliRunner, so match pieces
     assert "flagtown.example" in r.output
-    assert "lag.php" in r.output          # "/flag.php" may fold between lines
     assert "200" in r.output
+    rj = runner.invoke(app, ["http", cap, "--json"])
+    assert rj.exit_code == 0
+    tx = json.loads(rj.output)["transactions"][0]
+    assert tx["path"] == "/flag.php"
     r = runner.invoke(app, ["streams", cap])
     assert r.exit_code == 0
     r = runner.invoke(app, ["stream", cap, "0"])
