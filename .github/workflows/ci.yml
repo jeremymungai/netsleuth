@@ -30,9 +30,11 @@ jobs:
           python examples/generate_demo.py examples/demo.pcap
           python -m netsleuth summary examples/demo.pcap
           python -m netsleuth detect examples/demo.pcap --json > /dev/null
-          python -m netsleuth ctf   examples/demo.pcap --reveal | grep -q picoCTF
+          python -m netsleuth ctf   examples/demo.pcap --reveal > /tmp/ctf.txt
+          grep -q picoCTF /tmp/ctf.txt
           python examples/generate_covert.py examples/covert.pcap
-          python -m netsleuth covert examples/covert.pcap --json | grep -q v3rsion_s3l3ction
+          python -m netsleuth covert examples/covert.pcap --json > /tmp/covert.json
+          grep -q v3rsion_s3l3ction /tmp/covert.json
           python -m netsleuth report examples/demo.pcap --format md --output /tmp/r.md
           test -s /tmp/r.md
 
