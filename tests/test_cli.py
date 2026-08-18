@@ -100,10 +100,12 @@ def test_http_stream_and_follow(tmp_path):
     cap = build_capture(tmp_path, "rich")
     r = runner.invoke(app, ["http", cap])
     assert r.exit_code == 0
-    # note: table cells wrap at 80 cols under CliRunner, so match pieces
+    # table wrapping can split "/flag.php" differently across Rich versions
     assert "flagtown.example" in r.output
-    assert "lag.php" in r.output          # "/flag.php" may fold between lines
     assert "200" in r.output
+    rj = runner.invoke(app, ["http", cap, "--json"])
+    assert rj.exit_code == 0
+    assert json.loads(rj.output)["transactions"][0]["path"] == "/flag.php"
     r = runner.invoke(app, ["streams", cap])
     assert r.exit_code == 0
     r = runner.invoke(app, ["stream", cap, "0"])
