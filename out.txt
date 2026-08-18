@@ -1,0 +1,54 @@
+┌─────────────────────────────────────────────────────────────────────────────┐
+│ CTF MODE — candidates below are ranked guesses with sources; every hit      │
+│ explains how it was found.                                                  │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                Flag candidates                                
+┌───┬─────────────────────────────┬───────┬───────────────────────────────────┐
+│ # │ Candidate                   │ Conf. │ How it was found                  │
+├───┼─────────────────────────────┼───────┼───────────────────────────────────┤
+│ 1 │ picoCTF{f0ll0w_th3_str3ams} │ high  │ regex 'ctf.flag.named' matched in │
+│   │                             │       │ reassembled stream                │
+│   │                             │       │ (server→client); open with:       │
+│   │                             │       │ netsleuth stream 84               │
+└───┴─────────────────────────────┴───────┴───────────────────────────────────┘
+
+Encoded-looking strings (decoding attempted with confidence):
+  none decoded cleanly
+
+Single-byte XOR sweep (flag prefixes searched over every key):
+  no XOR-encoded flag prefixes found
+
+Covert channels — protocol metadata (fields that vary systematically):
+  TCP TCP flag set of 198.51.100.66: two-state repeated sequence; 24 bits -> 3 
+bytes (100% printable) -> 'UUU'
+    Wireshark: ip.src == 198.51.100.66 && tcp.flags
+full derivation: netsleuth covert <pcap>
+
+Where data hides — checklist for this capture:
+  • DNS TXT records: 30 seen (inspect them!)
+  • Very long DNS names (>60 ch): 0
+  • ICMP payloads: 6 (data inside ping!)
+  • Streams on unusual ports: 13
+                           Streams on unusual ports                            
+┌────────┬─────────────────────────────────────────┬───────┬──────────────────┐
+│ Stream │ Conversation                            │ Bytes │ Wireshark        │
+├────────┼─────────────────────────────────────────┼───────┼──────────────────┤
+│     71 │ 192.168.1.50:45100 → 203.0.113.9:21     │   142 │ tcp.stream == 71 │
+│     72 │ 192.168.1.50:46000 → 198.51.100.66:4444 │    84 │ tcp.stream == 72 │
+│     73 │ 192.168.1.50:46001 → 198.51.100.66:4444 │    84 │ tcp.stream == 73 │
+│     74 │ 192.168.1.50:46002 → 198.51.100.66:4444 │    84 │ tcp.stream == 74 │
+│     75 │ 192.168.1.50:46003 → 198.51.100.66:4444 │    84 │ tcp.stream == 75 │
+│     76 │ 192.168.1.50:46004 → 198.51.100.66:4444 │    84 │ tcp.stream == 76 │
+│     77 │ 192.168.1.50:46005 → 198.51.100.66:4444 │    84 │ tcp.stream == 77 │
+│     78 │ 192.168.1.50:46006 → 198.51.100.66:4444 │    84 │ tcp.stream == 78 │
+│     79 │ 192.168.1.50:46007 → 198.51.100.66:4444 │    84 │ tcp.stream == 79 │
+│     80 │ 192.168.1.50:46008 → 198.51.100.66:4444 │    84 │ tcp.stream == 80 │
+└────────┴─────────────────────────────────────────┴───────┴──────────────────┘
+┌─────────────────────────────── Keep digging ────────────────────────────────┐
+│ Next steps:                                                                 │
+│   • netsleuth stream <pcap> N — read any suspicious stream in full          │
+│   • netsleuth extract <pcap> -o out/ — carve transferred files              │
+│   • netsleuth secrets <pcap> --reveal — full secret values                  │
+│   • in Wireshark: try the filters above; check protocol hierarchy           │
+│ (Statistics → Protocol Hierarchy) for anything exotic                       │
+└─────────────────────────────────────────────────────────────────────────────┘

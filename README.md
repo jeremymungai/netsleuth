@@ -129,85 +129,85 @@ netsleuth report examples/demo.pcap --format html --output report.html
 
 Get a high-level summary of the capture file (packet counts, duration, etc.):
 ```bash
-netsleuth summary cap.pcap
+netsleuth summary yourfile.pcap
 ```
 
 Map out all hosts, conversations, and top talkers in the network:
 ```bash
-netsleuth hosts cap.pcap
+netsleuth hosts yourfile.pcap
 ```
 
 Run a guided, 11-step interactive investigation of the capture:
 ```bash
-netsleuth analyze cap.pcap
+netsleuth analyze yourfile.pcap
 ```
 
 #### Protocol Specific Analysis
 
 Inventory all DNS queries and detect potential DNS tunneling:
 ```bash
-netsleuth dns cap.pcap
+netsleuth dns yourfile.pcap
 ```
 
 Extract and view HTTP transactions directly from reassembled streams:
 ```bash
-netsleuth http cap.pcap
+netsleuth http yourfile.pcap
 ```
 
 Analyze TLS metadata (SNI, JA3 fingerprints, certificate details) without decryption:
 ```bash
-netsleuth tls cap.pcap
+netsleuth tls yourfile.pcap
 ```
 
 #### Deep Dive & Payload Extraction
 
 List all reconstructed TCP streams in the capture:
 ```bash
-netsleuth streams cap.pcap
+netsleuth streams yourfile.pcap
 ```
 
 Follow a specific TCP stream (e.g., stream 42) to view its payload:
 ```bash
-netsleuth stream cap.pcap 42 --hex
+netsleuth stream yourfile.pcap 42 --hex
 ```
 
 Carve and extract files from the PCAP, automatically verifying magic bytes and hashing them:
 ```bash
-netsleuth extract cap.pcap -o ./extracted_files/
+netsleuth extract yourfile.pcap -o ./extracted_files/
 ```
 
 #### Threat Hunting & Detection
 
 Run the full detection engine to calculate a risk score and map to MITRE ATT&CK:
 ```bash
-netsleuth detect cap.pcap -v
+netsleuth detect yourfile.pcap -v
 ```
 
 Hunt for hidden secrets, credentials, API keys, and CTF flags:
 ```bash
-netsleuth secrets cap.pcap --reveal
+netsleuth secrets yourfile.pcap --reveal
 ```
 
 Perform advanced metadata covert-channel analysis (finding data hidden in protocol headers):
 ```bash
-netsleuth covert cap.pcap
+netsleuth covert yourfile.pcap
 ```
 
 Generate a chronological timeline of all significant events and findings:
 ```bash
-netsleuth timeline cap.pcap --severity HIGH
+netsleuth timeline yourfile.pcap --severity HIGH
 ```
 
 #### Reporting
 
 Generate a standalone, interactive HTML report of the entire investigation:
 ```bash
-netsleuth report cap.pcap --format html --output report.html
+netsleuth report yourfile.pcap --format html --output report.html
 ```
 
 Output findings in JSON format for integration with SIEMs/dashboards:
 ```bash
-netsleuth report cap.pcap --format json --output report.json
+netsleuth report yourfile.pcap --format json --output report.json
 ```
 
 Common options: `--json`, `--verbose`, `--max-packets N`, `--rules FILE`
