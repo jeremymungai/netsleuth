@@ -80,13 +80,13 @@ NetSleuth automates that first pass:
 
 ```mermaid
 flowchart LR
-    A[pcap / pcapng] --> B[capture.py\nvalidation · raw reader · fast dissector\n(scapy fallback + DNS)]
-    B -->|normalized Packets| C[packet analyzers\noverview · dns · dhcp · arp · icmp]
-    B --> D[stream reassembly]
-    D --> E[stream analyzers\nhttp · tls · cleartext creds]
-    E --> F[extraction\ncarve · secrets · encodings]
-    C & F --> G[detection engine\n16 detectors · scoring · MITRE]
-    G --> H[reporting\nconsole · json · md · html · wireshark]
+    A["pcap / pcapng"] --> B["capture.py\nvalidation · raw reader · fast dissector\n(scapy fallback + DNS)"]
+    B -->|normalized Packets| C["packet analyzers\noverview · dns · dhcp · arp · icmp"]
+    B --> D["stream reassembly"]
+    D --> E["stream analyzers\nhttp · tls · cleartext creds"]
+    E --> F["extraction\ncarve · secrets · encodings"]
+    C & F --> G["detection engine\n16 detectors · scoring · MITRE"]
+    G --> H["reporting\nconsole · json · md · html · wireshark"]
 ```
 
 One streaming pass feeds the analyzers; a finalize stage then does stream
