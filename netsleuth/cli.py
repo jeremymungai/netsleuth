@@ -21,26 +21,17 @@ Commands map one-to-one onto analysis views:
 
 from __future__ import annotations
 
-import sys
 from typing import Optional
 
 import typer
 from rich.console import Console
 
 console_out = Console()
-
-if sys.stdout.isatty():
-    _status = console_out.status("[cyan]Warming up NetSleuth...[/cyan]", spinner="dots")
-    _status.start()
-else:
-    _status = None
+err_console = Console(stderr=True)
 
 from netsleuth import __version__
 from netsleuth.capture import CaptureError
 from netsleuth.pipeline import Options, Pipeline
-
-if _status:
-    _status.stop()
 
 app = typer.Typer(
     add_completion=False,
@@ -49,8 +40,6 @@ app = typer.Typer(
          "Reads capture files only; never touches the network.",
     rich_markup_mode="rich",
 )
-
-err_console = Console(stderr=True)
 
 # option aliases shared by most commands
 MAX_PACKETS = typer.Option(0, "--max-packets", help="Stop after N packets (0 = all).")
@@ -73,31 +62,26 @@ def _run(pcap: str, modules: Optional[set[str]], max_packets: int = 0,
     rules_paths = [rules] if rules else []
     opts = Options(modules=modules, max_packets=max_packets,
                    rules_paths=rules_paths, extract_dir=extract_dir)
-    progress = None
     try:
         pipe = Pipeline(pcap, opts)
     except CaptureError as e:
         _err_exit(str(e))
-    if show_progress and not QUIET and console_out.is_terminal:
-        from rich.progress import (BarColumn, Progress, TextColumn,
-                                   TimeElapsedColumn)
-        progress = Progress(TextColumn("[dim]{task.description}"),
-                            BarColumn(), TextColumn("{task.completed:,} pkts"),
-                            TimeElapsedColumn(), console=err_console)
-        progress.start()
+
+    status = None
+    if show_progress and not QUIET and err_console.is_terminal:
+        status = err_console.status("[cyan]netSleuth is working...[/cyan]", spinner="dots")
+        status.start()
+
     try:
-        if progress is not None:
-            task = progress.add_task("analyzing", total=None)
-            res = pipe.run(progress=lambda n: progress.update(task, completed=n))
-        else:
-            res = pipe.run()
+        res = pipe.run()
     except CaptureError as e:
-        if progress is not None:
-            progress.stop()
+        if status is not None:
+            status.stop()
         _err_exit(str(e))
     finally:
-        if progress is not None:
-            progress.stop()
+        if status is not None:
+            status.stop()
+
     return res
 
 
