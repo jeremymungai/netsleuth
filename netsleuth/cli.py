@@ -21,7 +21,6 @@ Commands map one-to-one onto analysis views:
 
 from __future__ import annotations
 
-import sys
 from typing import Optional
 
 import typer
@@ -30,18 +29,9 @@ from rich.console import Console
 console_out = Console()
 err_console = Console(stderr=True)
 
-if sys.stdout.isatty():
-    _import_status = console_out.status("[cyan]Warming up NetSleuth...[/cyan]", spinner="dots")
-    _import_status.start()
-else:
-    _import_status = None
-
 from netsleuth import __version__
 from netsleuth.capture import CaptureError
 from netsleuth.pipeline import Options, Pipeline
-
-if _import_status:
-    _import_status.stop()
 
 app = typer.Typer(
     add_completion=False,
