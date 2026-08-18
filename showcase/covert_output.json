@@ -1,0 +1,253 @@
+{
+  "candidates": [
+    {
+      "protocol": "http",
+      "field": "request version",
+      "source": "192.168.1.69",
+      "observed_values": [
+        "HTTP/1.0",
+        "HTTP/1.1"
+      ],
+      "value_counts": {
+        "HTTP/1.0": 149,
+        "HTTP/1.1": 147
+      },
+      "sequence": [
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0",
+        "HTTP/1.0",
+        "HTTP/1.1",
+        "HTTP/1.0"
+      ],
+      "sequence_length": 296,
+      "pattern": "two-state repeated sequence",
+      "mapping": "HTTP/1.0ΓåÆ0, HTTP/1.1ΓåÆ1",
+      "bits_preview": "0101001101001011001011010100001101000101010100100101010001111011",
+      "bits_length": 296,
+      "grouped_bytes": 37,
+      "decoded": "SK-CERT{h1DD3n_1n_pl41n7eX7_n37Fl0w}\n",
+      "printable_ratio": 1.0,
+      "confidence": "high",
+      "first_ts": "2026-02-01 14:24:36.858+00:00",
+      "last_ts": "2026-02-01 14:24:36.969+00:00",
+      "frames": [],
+      "wireshark_filters": [
+        "http.request && ip.src == 192.168.1.69"
+      ],
+      "assumptions": [
+        "observations are ordered by time and belong to source 192.168.1.69",
+        "the request version field is freely choosable by the sender",
+        "symbols were mapped as HTTP/1.0ΓåÆ0, HTTP/1.1ΓåÆ1 and grouped 8 bits per byte (msb-first, dropping trailing remainder bits)",
+        "only the best of all tried mappings is shown; the rest may also be meaningful"
+      ],
+      "alternatives_considered": [
+        "HTTP/1.0ΓåÆ0, HTTP/1.1ΓåÆ1 (msb-first, drop-trailing) ΓåÆ printable 1.00",
+        "HTTP/1.0ΓåÆ0, HTTP/1.1ΓåÆ1 (msb-first, drop-leading) ΓåÆ printable 1.00",
+        "HTTP/1.0ΓåÆ0, HTTP/1.1ΓåÆ1 (lsb-first, drop-trailing) ΓåÆ printable 0.35",
+        "HTTP/1.0ΓåÆ0, HTTP/1.1ΓåÆ1 (lsb-first, drop-leading) ΓåÆ printable 0.35",
+        "HTTP/1.0ΓåÆ1, HTTP/1.1ΓåÆ0 (lsb-first, drop-trailing) ΓåÆ printable 0.35",
+        "HTTP/1.0ΓåÆ1, HTTP/1.1ΓåÆ0 (lsb-first, drop-leading) ΓåÆ printable 0.35"
+      ]
+    },
+    {
+      "protocol": "http",
+      "field": "Host header",
+      "source": "192.168.1.69",
+      "observed_values": [
+        "",
+        "192.168.48.134:8080"
+      ],
+      "value_counts": {
+        "": 149,
+        "192.168.48.134:8080": 147
+      },
+      "sequence": [
+        "",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "",
+        "192.168.48.134:8080",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "192.168.48.134:8080",
+        "",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "",
+        "",
+        "",
+        "192.168.48.134:8080",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "192.168.48.134:8080",
+        "",
+        "",
+        "192.168.48.134:8080",
+        ""
+      ],
+      "sequence_length": 296,
+      "pattern": "two-state repeated sequence",
+      "mapping": "ΓåÆ0, 192.168.48.134:8080ΓåÆ1",
+      "bits_preview": "0101001101001011001011010100001101000101010100100101010001111011",
+      "bits_length": 296,
+      "grouped_bytes": 37,
+      "decoded": "SK-CERT{h1DD3n_1n_pl41n7eX7_n37Fl0w}\n",
+      "printable_ratio": 1.0,
+      "confidence": "high",
+      "first_ts": "2026-02-01 14:24:36.858+00:00",
+      "last_ts": "2026-02-01 14:24:36.969+00:00",
+      "frames": [],
+      "wireshark_filters": [
+        "http.host && ip.src == 192.168.1.69"
+      ],
+      "assumptions": [
+        "observations are ordered by time and belong to source 192.168.1.69",
+        "the Host header field is freely choosable by the sender",
+        "symbols were mapped as ΓåÆ0, 192.168.48.134:8080ΓåÆ1 and grouped 8 bits per byte (msb-first, dropping trailing remainder bits)",
+        "only the best of all tried mappings is shown; the rest may also be meaningful"
+      ],
+      "alternatives_considered": [
+        "ΓåÆ0, 192.168.48.134:8080ΓåÆ1 (msb-first, drop-trailing) ΓåÆ printable 1.00",
+        "ΓåÆ0, 192.168.48.134:8080ΓåÆ1 (msb-first, drop-leading) ΓåÆ printable 1.00",
+        "ΓåÆ0, 192.168.48.134:8080ΓåÆ1 (lsb-first, drop-trailing) ΓåÆ printable 0.35",
+        "ΓåÆ0, 192.168.48.134:8080ΓåÆ1 (lsb-first, drop-leading) ΓåÆ printable 0.35",
+        "ΓåÆ1, 192.168.48.134:8080ΓåÆ0 (lsb-first, drop-trailing) ΓåÆ printable 0.35",
+        "ΓåÆ1, 192.168.48.134:8080ΓåÆ0 (lsb-first, drop-leading) ΓåÆ printable 0.35"
+      ]
+    },
+    {
+      "protocol": "tcp",
+      "field": "frame length class",
+      "source": "185.166.143.50",
+      "observed_values": [
+        "10-99",
+        "100-999"
+      ],
+      "value_counts": {
+        "10-99": 10,
+        "100-999": 6
+      },
+      "sequence": [
+        "10-99",
+        "10-99",
+        "100-999",
+        "10-99",
+        "10-99",
+        "100-999",
+        "10-99",
+        "100-999",
+        "10-99",
+        "10-99",
+        "100-999",
+        "100-999",
+        "10-99",
+        "100-999",
+        "10-99",
+        "10-99"
+      ],
+      "sequence_length": 16,
+      "pattern": "two-state repeated sequence",
+      "mapping": "10-99ΓåÆ0, 100-999ΓåÆ1",
+      "bits_preview": "0010010100110100",
+      "bits_length": 16,
+      "grouped_bytes": 2,
+      "decoded": "%4",
+      "printable_ratio": 1.0,
+      "confidence": "medium",
+      "first_ts": "2026-02-01 14:23:47.386+00:00",
+      "last_ts": "2026-02-01 14:23:48.228+00:00",
+      "frames": [
+        252,
+        255,
+        463,
+        464
+      ],
+      "wireshark_filters": [
+        "ip.src == 185.166.143.50 && tcp"
+      ],
+      "assumptions": [
+        "observations are ordered by time and belong to source 185.166.143.50",
+        "the frame length class field is freely choosable by the sender",
+        "symbols were mapped as 10-99ΓåÆ0, 100-999ΓåÆ1 and grouped 8 bits per byte (msb-first, dropping trailing remainder bits)",
+        "only the best of all tried mappings is shown; the rest may also be meaningful"
+      ],
+      "alternatives_considered": [
+        "10-99ΓåÆ0, 100-999ΓåÆ1 (msb-first, drop-trailing) ΓåÆ printable 1.00",
+        "10-99ΓåÆ0, 100-999ΓåÆ1 (msb-first, drop-leading) ΓåÆ printable 1.00",
+        "10-99ΓåÆ0, 100-999ΓåÆ1 (lsb-first, drop-trailing) ΓåÆ printable 0.50",
+        "10-99ΓåÆ0, 100-999ΓåÆ1 (lsb-first, drop-leading) ΓåÆ printable 0.50",
+        "10-99ΓåÆ1, 100-999ΓåÆ0 (lsb-first, drop-trailing) ΓåÆ printable 0.50",
+        "10-99ΓåÆ1, 100-999ΓåÆ0 (lsb-first, drop-leading) ΓåÆ printable 0.50"
+      ]
+    }
+  ]
+}

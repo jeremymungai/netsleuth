@@ -1,0 +1,28 @@
+# CTF flag patterns.
+#
+# Rule fields:
+#   id          unique id (namespaced by filename)
+#   kind        category reported to the analyst
+#   pattern     Python regex (bytes-safe); use (?P<value>...) to control
+#               what is captured, else the whole match is used
+#   confidence  low | medium | high
+#   score       optional ranking bonus (higher = more interesting)
+
+rules:
+  - id: ctf.flag.named
+    kind: flag
+    pattern: '(?P<value>(?:picoCTF|HTB|THM|flag|FLAG|CTF|ctf|CTF[A-Za-z]*|[A-Za-z]{2,10}CTF)\{[!-~]{4,256}\})'
+    confidence: high
+    score: 100
+
+  - id: ctf.flag.generic-braces
+    kind: flag
+    pattern: '\b[A-Za-z][A-Za-z0-9_]{1,15}\{[!-~]{6,180}\}'
+    confidence: medium
+    score: 60
+
+  - id: ctf.flag.netsec
+    kind: flag
+    pattern: '(?P<value>(?:SKY|sky|HTB|GLUG|CSI|InCTF|BSides)\{[^}]{4,}\})'
+    confidence: medium
+    score: 70

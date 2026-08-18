@@ -1,0 +1,57 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "netsleuth"
+version = "0.1.0"
+description = "Open-source PCAP analysis & network threat-hunting toolkit: turn packet captures into explainable investigations."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "NetSleuth contributors" }]
+keywords = ["pcap", "pcapng", "network-forensics", "threat-hunting",
+            "incident-response", "ctf", "wireshark", "security"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Information Technology",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Security",
+    "Topic :: System :: Networking :: Monitoring",
+]
+dependencies = [
+    "scapy>=2.5.0",
+    "typer>=0.12.0",
+    "rich>=13.0.0",
+    "PyYAML>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[project.scripts]
+netsleuth = "netsleuth.cli:main"
+
+[project.urls]
+Documentation = "https://github.com/yourname/netsleuth#readme"
+
+[tool.setuptools.packages.find]
+include = ["netsleuth*"]
+
+[tool.setuptools.package-data]
+netsleuth = ["signatures/*.yaml"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+filterwarnings = [
+    "ignore::DeprecationWarning:scapy.*",
+    "ignore::DeprecationWarning:.*DNS fields.*",
+]

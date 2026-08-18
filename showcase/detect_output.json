@@ -1,0 +1,241 @@
+{
+  "findings": [
+    {
+      "id": "covert.http.Host header.192.168.1.69",
+      "title": "Possible covert-channel candidate: http Host header of 192.168.1.69",
+      "severity": "HIGH",
+      "confidence": "high",
+      "description": "The Host header field across 296 HTTP messages from 192.168.1.69 varies over a small alphabet (, 192.168.48.134:8080) in a two-state repeated sequence. Mapping the values to bits and grouping 8 per byte yields 37 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, portΓÇª) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof ΓÇö the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: http.host && ip.src == 192.168.1.69 ΓÇö read the field of each packet in order, note the values (the engine observed: ├ù149, 192.168.48.134:8080├ù147), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: two-state repeated sequence",
+        "mapping: ΓåÆ0, 192.168.48.134:8080ΓåÆ1",
+        "bitstream: 296 bits ΓåÆ 37 bytes",
+        "decoded (first 120 chars): 'SK-CERT{h1DD3n_1n_pl41n7eX7_n37Fl0w}\\n'",
+        "printable ratio: 1.00"
+      ],
+      "hosts": [
+        "192.168.1.69"
+      ],
+      "protocol": "http",
+      "first_ts": "2026-02-01 14:24:36.858+00:00",
+      "last_ts": "2026-02-01 14:24:36.969+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "http.host && ip.src == 192.168.1.69"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1071.001",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: Web Protocols",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "covert.http.request version.192.168.1.69",
+      "title": "Possible covert-channel candidate: http request version of 192.168.1.69",
+      "severity": "HIGH",
+      "confidence": "high",
+      "description": "The request version field across 296 HTTP messages from 192.168.1.69 varies over a small alphabet (HTTP/1.0, HTTP/1.1) in a two-state repeated sequence. Mapping the values to bits and grouping 8 per byte yields 37 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, portΓÇª) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof ΓÇö the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: http.request && ip.src == 192.168.1.69 ΓÇö read the field of each packet in order, note the values (the engine observed: HTTP/1.0├ù149, HTTP/1.1├ù147), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: two-state repeated sequence",
+        "mapping: HTTP/1.0ΓåÆ0, HTTP/1.1ΓåÆ1",
+        "bitstream: 296 bits ΓåÆ 37 bytes",
+        "decoded (first 120 chars): 'SK-CERT{h1DD3n_1n_pl41n7eX7_n37Fl0w}\\n'",
+        "printable ratio: 1.00"
+      ],
+      "hosts": [
+        "192.168.1.69"
+      ],
+      "protocol": "http",
+      "first_ts": "2026-02-01 14:24:36.858+00:00",
+      "last_ts": "2026-02-01 14:24:36.969+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "http.request && ip.src == 192.168.1.69"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1071.001",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: Web Protocols",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "scan.syn.192.168.1.69",
+      "title": "Possible port scan from 192.168.1.69 (296 connection attempts)",
+      "severity": "HIGH",
+      "confidence": "high",
+      "description": "192.168.1.69 sent SYN packets to 1 distinct ports on other hosts; only 0 handshakes completed.",
+      "explanation": "A SYN scan probes many ports quickly to find open services without completing connections. Legitimate software rarely touches dozens of ports on remote hosts in one burst ΓÇö but load balancers and monitoring systems sometimes do, so check what 192.168.1.69 is before concluding.",
+      "verification": "In Wireshark, filter for this source's SYN packets (\"ip.src == 192.168.1.69 && tcp.flags.syn == 1 && !tcp.flags.ack\") and check which ports answered SYN+ACK.",
+      "evidence": [
+        "distinct destination ports probed: 1",
+        "example ports: 8080",
+        "handshake completion rate: 0/296",
+        "scan window: 0.1s"
+      ],
+      "hosts": [
+        "192.168.1.69"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2026-02-01 14:24:36.858+00:00",
+      "last_ts": "2026-02-01 14:24:36.969+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "ip.src == 192.168.1.69 && tcp.flags.syn == 1 && !tcp.flags.ack"
+      ],
+      "mitre": [
+        {
+          "technique": "T1046",
+          "tactic": "Discovery",
+          "name": "Network Service Discovery",
+          "why": "mass TCP SYN probing of many ports"
+        },
+        {
+          "technique": "T1595",
+          "tactic": "Reconnaissance",
+          "name": "Active Scanning",
+          "why": "active scanning behavior against network hosts"
+        }
+      ]
+    },
+    {
+      "id": "beacon.tcp.192.168.1.69.10.10.10.10.8080",
+      "title": "Periodic connections: 192.168.1.69 ΓåÆ 10.10.10.10:8080 (296 connections, ~0.0s interval)",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "192.168.1.69 connected to 10.10.10.10:8080 296 times with a mean interval of 0.0s and low timing variance (CV=0.36).",
+      "explanation": "Malware check-ins are often timer-driven, so their connection intervals are far more regular than human-driven traffic. BUT: software updaters, NTP clients, monitoring agents and messaging apps also produce regular traffic. This is an indicator to investigate, not evidence of compromise on its own. Check the destination's reputation and the stream content.",
+      "verification": "In Wireshark: ip.addr == 10.10.10.10 && tcp.port == 8080 ΓÇö look at the time column (╬ötime) between connections.",
+      "evidence": [
+        "connections: 296",
+        "mean interval: 0.0s (jitter stddev 0.00s, CV 0.36)",
+        "observation window: 0s (Γëê 111 intervals)",
+        "payload size uniformity: CV 0.35 across 296 data-bearing connections"
+      ],
+      "hosts": [
+        "192.168.1.69",
+        "10.10.10.10"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2026-02-01 14:24:36.858+00:00",
+      "last_ts": "2026-02-01 14:24:36.969+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "ip.addr == 10.10.10.10 && tcp.port == 8080"
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.001",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: Web Protocols",
+          "why": "regularly-timed repeated connections consistent with a C2 check-in schedule"
+        }
+      ]
+    },
+    {
+      "id": "covert.tcp.frame length class.185.166.143.50",
+      "title": "Possible covert-channel candidate: tcp frame length class of 185.166.143.50",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "The frame length class field across 16 TCP messages from 185.166.143.50 varies over a small alphabet (10-99, 100-999) in a two-state repeated sequence. Mapping the values to bits and grouping 8 per byte yields 2 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, portΓÇª) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof ΓÇö the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: ip.src == 185.166.143.50 && tcp ΓÇö read the field of each packet in order, note the values (the engine observed: 10-99├ù10, 100-999├ù6), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: two-state repeated sequence",
+        "mapping: 10-99ΓåÆ0, 100-999ΓåÆ1",
+        "bitstream: 16 bits ΓåÆ 2 bytes",
+        "decoded (first 120 chars): '%4'",
+        "printable ratio: 1.00",
+        "frames 252ΓÇô464"
+      ],
+      "hosts": [
+        "185.166.143.50"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2026-02-01 14:23:47.386+00:00",
+      "last_ts": "2026-02-01 14:23:48.228+00:00",
+      "packet_refs": [
+        "frame 252",
+        "frame 255",
+        "frame 463",
+        "frame 464"
+      ],
+      "wireshark_filters": [
+        "ip.src == 185.166.143.50 && tcp"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "http.unusual-methods",
+      "title": "Uncommon HTTP methods used: DELETE, PATCH, PUT",
+      "severity": "LOW",
+      "confidence": "medium",
+      "description": "192 request(s) used methods outside the usual GET/POST set.",
+      "explanation": "TRACE can reflect credentials (XST), CONNECT proxies tunnels, and PUT/DELETE on unexpected endpoints often means someone is probing an API or trying to plant content. REST APIs use these methods legitimately ΓÇö context decides.",
+      "verification": "In Wireshark: http.request.method in {DELETE PATCH PUT}",
+      "evidence": [
+        "DELETE 192.168.48.134:8080/style.css (status 0)",
+        "PUT /dashboard (status 0)",
+        "PUT /data (status 0)",
+        "PUT /register (status 0)",
+        "DELETE 192.168.48.134:8080/dashboard (status 0)",
+        "PATCH /login (status 0)"
+      ],
+      "hosts": [
+        "192.168.1.69",
+        "192.168.48.134:8080"
+      ],
+      "protocol": "http",
+      "first_ts": "2026-02-01 14:24:36.859+00:00",
+      "last_ts": null,
+      "packet_refs": [],
+      "wireshark_filters": [
+        "http.request.method in {DELETE PATCH PUT}"
+      ],
+      "mitre": []
+    }
+  ],
+  "score": {
+    "score": 100,
+    "label": "critical",
+    "breakdown": {
+      "HIGH": 3,
+      "MEDIUM": 2,
+      "LOW": 1
+    }
+  }
+}

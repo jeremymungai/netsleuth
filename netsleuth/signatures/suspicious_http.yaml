@@ -1,0 +1,52 @@
+# HTTP-layer hunt patterns used by the detection engine. Each maps to a
+# Wireshark verification filter and MITRE technique where meaningful.
+# These are indicators to *investigate*, never verdicts on their own.
+
+rules:
+  - id: http.directory-traversal
+    kind: traversal
+    pattern: '(?:\.\./|%2e%2e%2f|%2e%2e/|\.\.%2f|%252e%252e%252f){2,}'
+    confidence: high
+    score: 70
+
+  - id: http.cmd-injection
+    kind: command-injection
+    pattern: '(?i)(?:;|%3B)\s*(?:cat|ls|id|whoami|uname|wget|curl|nc|ping|python|perl|bash|sh)\b'
+    confidence: high
+    score: 75
+
+  - id: http.sql-injection
+    kind: sql-injection
+    pattern: '(?i)(?:\x27|%27)\s*(?:or|and)\s*(?:\x27|\d)\s*=\s*(?:\x27|\d)|(?:union\s+(?:all\s+)?select)|(?:;\s*drop\s+table)|(?:benchmark\s*\()|(?:sleep\s*\()'
+    confidence: high
+    score: 75
+
+  - id: http.xss-probe
+    kind: xss
+    pattern: '(?i)(?:<script\b|javascript:|onerror\s*=|onload\s*=|alert\s*\()'
+    confidence: medium
+    score: 55
+
+  - id: http.webshell-signature
+    kind: webshell
+    pattern: '(?i)(?:system|shell_exec|passthru|exec|eval)\s*\(\s*\$_(?:GET|POST|REQUEST|COOKIE)'
+    confidence: high
+    score: 90
+
+  - id: http.php-webshell-param
+    kind: webshell
+    pattern: '(?i)\b(?:cmd|command|exec|c|execute)=/(?:bin/)?(?:ba)?sh\s+-c\b'
+    confidence: medium
+    score: 80
+
+  - id: http.file-upload-suspicious
+    kind: upload
+    pattern: '(?i)filename="[^"]+\.(?:php[3457]?|phtml|jsp|asp|aspx|ashx|war|py|pl|cgi)"'
+    confidence: high
+    score: 80
+
+  - id: http.suspicious-user-agent
+    kind: user-agent
+    pattern: '(?i)\b(?:sqlmap|nikto|nmap scripting engine|masscan|zgrab|dirbuster|gobuster|wpscan|hydra|metasploit|havij|acunetix|nessus|python-requests/0|go-http-client/0)\b'
+    confidence: high
+    score: 65

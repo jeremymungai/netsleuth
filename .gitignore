@@ -1,0 +1,19 @@
+__pycache__/
+*.py[cod]
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+.coverage
+htmlcov/
+
+# carved artifacts & generated reports (keep demo.pcap + demo-report.html examples)
+examples/carved/
+*.html
+!examples/demo-report.html
+
+# local rules / notes
+*.local.yaml
+.env
+.venv/
+venv/
