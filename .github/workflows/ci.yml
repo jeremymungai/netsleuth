@@ -24,6 +24,8 @@ jobs:
         run: python -m pytest --tb=short
       - name: Smoke-test CLI on the demo capture
         shell: bash
+        env:
+          PYTHONIOENCODING: utf8
         run: |
           python examples/generate_demo.py examples/demo.pcap
           python -m netsleuth summary examples/demo.pcap
@@ -41,6 +43,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - name: Install dependencies
+        run: pip install -e .
       - name: Compile-check every module
         run: python -m compileall netsleuth tests scripts
       - name: Rule files parse
