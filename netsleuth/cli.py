@@ -62,17 +62,14 @@ def _run(pcap: str, modules: Optional[set[str]], max_packets: int = 0,
     rules_paths = [rules] if rules else []
     opts = Options(modules=modules, max_packets=max_packets,
                    rules_paths=rules_paths, extract_dir=extract_dir)
-    try:
-        pipe = Pipeline(pcap, opts)
-    except CaptureError as e:
-        _err_exit(str(e))
 
     status = None
-    if show_progress and not QUIET and err_console.is_terminal:
-        status = err_console.status("[cyan]netSleuth is working...[/cyan]", spinner="dots")
+    if not QUIET and console_out.is_terminal:
+        status = console_out.status("[cyan]netSleuth is working...[/cyan]", spinner="dots")
         status.start()
 
     try:
+        pipe = Pipeline(pcap, opts)
         res = pipe.run()
     except CaptureError as e:
         if status is not None:
