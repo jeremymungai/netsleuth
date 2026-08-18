@@ -147,8 +147,8 @@ def generate_markdown(result) -> str:
                     "", "Assumptions:"]
             out += [f"- {a}" for a in c.assumptions]
             out.append("")
-        out.append("> Candidates are derivations, not verdicts — see "
-                   "`docs/covert-channels.md`.", "")
+        out.extend(["> Candidates are derivations, not verdicts — see "
+                    "`docs/covert-channels.md`.", ""])
 
     # Suspicious activity (findings)
     out += ["## Suspicious activity", ""]
