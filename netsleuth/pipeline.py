@@ -48,6 +48,7 @@ class Options:
     rules_paths: list[str] = field(default_factory=list)
     reveal_secrets: bool = False
     stream_buffer_limit: int = StreamReassembler.DEFAULT_LIMIT
+    known_dcs: list[str] = field(default_factory=list)   # --dc overrides
 
     def wants(self, module: str) -> bool:
         return self.modules is None or module in self.modules
@@ -72,6 +73,7 @@ class AnalysisResult:
     secrets: list[SecretMatch] = field(default_factory=list)
     covert: list = field(default_factory=list)          # CovertCandidate records
     covert_collector: object = None                     # per-packet metadata collector
+    domain_controllers: set[str] = field(default_factory=set)   # auto-detected + --dc
     findings: list[Finding] = field(default_factory=list)
     events: list[TimelineEvent] = field(default_factory=list)
     score: RiskScore = field(default_factory=RiskScore)
@@ -208,6 +210,10 @@ class Pipeline:
         if self.options.wants("detect"):
             from netsleuth.covert import analyze_capture
             self.result.covert = analyze_capture(self.result)
+            from netsleuth.detection import dcs
+            self.result.domain_controllers = \
+                dcs.find_domain_controllers(self.result) \
+                | set(self.options.known_dcs)
             from netsleuth.detection import engine
             self.result.findings = engine.run_detectors(self.result)
             from netsleuth.detection.scoring import score_findings

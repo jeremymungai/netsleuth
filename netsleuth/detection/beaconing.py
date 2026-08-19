@@ -15,6 +15,9 @@ from __future__ import annotations
 
 import statistics
 
+from netsleuth.detection.allowlists import is_telemetry_domain
+from netsleuth.detection.dnshunt import well_known_query
+from netsleuth.detection.dcs import is_dc_port
 from netsleuth.enrichment.mitre import mitre
 from netsleuth.models import Confidence, Finding, Severity
 
@@ -43,7 +46,10 @@ def detect_tcp_beaconing(result) -> list[Finding]:
         groups.setdefault((f.src, f.dst, f.dport), []).append(f)
 
     findings = []
+    dcs = set(getattr(result, "domain_controllers", None) or ())
     for (src, dst, dport), flows in sorted(groups.items()):
+        if dst in dcs and is_dc_port(dport):
+            continue      # scheduled DC traffic: Group Policy, Kerberos, SYSVOL
         starts = sorted(f.first_ts for f in flows)
         if len(starts) < MIN_CONNECTIONS:
             continue
@@ -116,6 +122,9 @@ def detect_dns_beaconing(result) -> list[Finding]:
         groups.setdefault((q.client, q.name), []).append(q.ts)
     findings = []
     for (client, name), times in sorted(groups.items()):
+        if is_telemetry_domain(name) or well_known_query(name):
+            continue      # OS telemetry and WPAD/AD service discovery are
+                          # scheduled by the OS itself, not by malware
         times.sort()
         if len(times) < MIN_CONNECTIONS:
             continue

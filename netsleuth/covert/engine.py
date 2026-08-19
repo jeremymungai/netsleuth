@@ -29,6 +29,10 @@ def analyze_capture(result) -> list[CovertCandidate]:
     candidates: list[CovertCandidate] = []
     for stream in fields.extract_all(result):
         values = stream.value_list
+        if variation.all_hostnames(sorted(set(values))):
+            # every value is a real hostname — names in use, not symbols
+            # chosen for their bit pattern (see variation.all_hostnames)
+            continue
         rep = variation.analyze_variation(values)
         if not variation.is_interesting(rep):
             continue

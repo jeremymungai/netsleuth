@@ -57,11 +57,12 @@ def _err_exit(msg: str, code: int = 2) -> None:
 
 def _run(pcap: str, modules: Optional[set[str]], max_packets: int = 0,
          rules: Optional[str] = None, extract_dir: Optional[str] = None,
-         show_progress: bool = True):
+         show_progress: bool = True, known_dcs: Optional[list[str]] = None):
     """Shared pipeline driver with progress reporting."""
     rules_paths = [rules] if rules else []
     opts = Options(modules=modules, max_packets=max_packets,
-                   rules_paths=rules_paths, extract_dir=extract_dir)
+                   rules_paths=rules_paths, extract_dir=extract_dir,
+                   known_dcs=known_dcs or [])
 
     status = None
     if not QUIET and console_out.is_terminal:
@@ -264,9 +265,13 @@ def secrets(pcap: str = typer.Argument(...),
 def detect(pcap: str = typer.Argument(...),
            rules: Optional[str] = RULES_OPT,
            max_packets: int = MAX_PACKETS, as_json: bool = AS_JSON,
-           verbose: bool = VERBOSE):
+           verbose: bool = VERBOSE,
+           dc: list[str] = typer.Option([], "--dc",
+                                        help="Domain controller IP (repeatable). "
+                                             "Periodic DC traffic on 88/135/389/445/636 "
+                                             "is then not flagged as beaconing.")):
     """Run the detection engine: findings, evidence, risk score."""
-    res = _run(pcap, None, max_packets, rules)
+    res = _run(pcap, None, max_packets, rules, known_dcs=dc)
     if as_json:
         import json
         console_out.print_json(json.dumps(
@@ -321,9 +326,11 @@ def report(pcap: str = typer.Argument(...),
 def analyze(pcap: str = typer.Argument(...),
             rules: Optional[str] = RULES_OPT,
             max_packets: int = MAX_PACKETS, verbose: bool = VERBOSE,
-            reveal: bool = REVEAL):
+            reveal: bool = REVEAL,
+            dc: list[str] = typer.Option([], "--dc",
+                                         help="Domain controller IP (repeatable).")):
     """Guided 11-step investigation: overview → findings → Wireshark filters."""
-    res = _run(pcap, None, max_packets, rules)
+    res = _run(pcap, None, max_packets, rules, known_dcs=dc)
     from netsleuth.reporting import console as rc
     rc.render_analyze(res, console_out, verbose=verbose, reveal=reveal)
 

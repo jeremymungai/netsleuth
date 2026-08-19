@@ -7,8 +7,19 @@ here, which is what makes the engine generic over fields.
 from __future__ import annotations
 
 import math
+import re
 from collections import Counter
 from dataclasses import dataclass
+
+# a syntactically valid hostname: dot-separated labels of letters/digits/
+# hyphens, with an alphabetic (or punycode) TLD — values like this are
+# real names being *used*, not data being *encoded*.
+_HOSTNAME_RE = re.compile(
+    r"^(?=.{1,253}$)(?!-)[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})*"
+    r"\.[a-z]{2,24}$|^(?=.{1,253}$)(?!-)[a-z0-9-]{1,63}(\.[a-z0-9-]{1,63})*"
+    r"\.xn--[a-z0-9-]{2,59}$",
+    re.IGNORECASE,
+)
 
 
 @dataclass
@@ -35,6 +46,22 @@ class VariationReport:
         if self.cardinality <= 8 and self.transition_ratio >= 0.55:
             return f"low-cardinality ({self.cardinality}-state) repeated sequence"
         return "high-cardinality variation"
+
+
+def all_hostnames(values: list[str]) -> bool:
+    """True when every value in the alphabet is a syntactically valid
+    hostname (contains a dot and ends in an alphabetic TLD).
+
+    A field whose values are all real hostnames — an HTTP Host header
+    cycling through ctldl.windowsupdate.com, x1.c.lencr.org, … — is a
+    client *using* names, not encoding data in them. A true covert
+    channel needs freely-chosen symbols (``a``, ``ab``, ``ba``, hex
+    chunks…), which never look like dotted hostnames with TLDs. Used as
+    a pre-filter before bit-mapping so name-like alphabets are never
+    decoded.
+    """
+    return bool(values) and all(
+        bool(v) and _HOSTNAME_RE.match(v) is not None for v in values)
 
 
 def analyze_variation(values: list[str]) -> VariationReport:
