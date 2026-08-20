@@ -137,8 +137,17 @@ def _ttl_class(ttl: int) -> str:
     return "256+"
 
 
-def _tcp_ip_fields(collector) -> list[FieldStream]:
-    """Per-source TCP/IP metadata streams from the packet collector."""
+def _tcp_ip_fields(collector, internal_ips: set[str] | None = None) -> list[FieldStream]:
+    """Per-source TCP/IP metadata streams from the packet collector.
+
+    TCP flags and IP ID/TTL are chosen by the sender's *kernel*, not by
+    an application, so for external sources (CDNs, cloud front-ends) they
+    are artifacts of that server's OS stack — an internal attacker
+    cannot encode anything in them. Those fields are only analyzed for
+    internal sources, where a compromised host could plausibly craft
+    them.
+    """
+    internal_ips = internal_ips or set()
     out: list[FieldStream] = []
 
     def mk(field: str, src: str, values, flt: str, how: str) -> None:
@@ -147,6 +156,8 @@ def _tcp_ip_fields(collector) -> list[FieldStream]:
                                how_extracted=how))
 
     for src, obs in collector.seqs.items():
+        if internal_ips and src not in internal_ips:
+            continue                        # external source: skip stack-owned fields
         tcp_obs = [o for o in obs if o.flags]
         if len(tcp_obs) >= 16:
             mk("destination port", src,
@@ -196,11 +207,18 @@ def _sequential(values: list[int], tolerance: float = 0.9) -> bool:
     return False
 
 
+def _internal_ips(result) -> set[str]:
+    """Internal (RFC1918/link-local/ULA) addresses seen in the capture."""
+    ov = getattr(result, "overview", None)
+    hosts = getattr(ov, "hosts", None) or {}
+    return {ip for ip, h in hosts.items() if h.is_internal}
+
+
 def extract_all(result) -> list[FieldStream]:
     streams: list[FieldStream] = []
     streams += _http_fields(result)
     streams += _dns_fields(result)
     collector = getattr(result, "covert_collector", None)
     if collector is not None:
-        streams += _tcp_ip_fields(collector)
+        streams += _tcp_ip_fields(collector, _internal_ips(result))
     return streams

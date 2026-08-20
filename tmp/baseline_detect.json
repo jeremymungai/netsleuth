@@ -1,0 +1,713 @@
+{
+  "findings": [
+    {
+      "id": "beacon.dns.10.0.19.14.v10.events.data.microsoft.com",
+      "title": "Periodic DNS queries: 10.0.19.14 → v10.events.data.microsoft.com every ~1821s",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "10.0.19.14 queried v10.events.data.microsoft.com 13 times at a mean interval of 1821.4s (CV=0.20).",
+      "explanation": "Regular DNS lookups of the same name can be DNS-based C2 (queries carry no data here, but the schedule does) or plain background software behavior. Judge together with the resolved addresses and any tunneling indicators.",
+      "verification": "In Wireshark: dns.qry.name == \"v10.events.data.microsoft.com\"",
+      "evidence": [
+        "queries: 13",
+        "mean interval: 1821.4s (CV 0.20)"
+      ],
+      "hosts": [
+        "10.0.19.14"
+      ],
+      "protocol": "dns",
+      "first_ts": "2022-03-21 20:58:47.883+00:00",
+      "last_ts": "2022-03-22 03:03:04.692+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "dns.qry.name == \"v10.events.data.microsoft.com\""
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.004",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: DNS",
+          "why": "regularly scheduled DNS queries to a single domain"
+        }
+      ]
+    },
+    {
+      "id": "beacon.tcp.10.0.19.14.10.0.19.9.445",
+      "title": "Periodic connections: 10.0.19.14 → 10.0.19.9:445 (32 connections, ~724.4s interval)",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "10.0.19.14 connected to 10.0.19.9:445 32 times with a mean interval of 724.4s and low timing variance (CV=0.39).",
+      "explanation": "Malware check-ins are often timer-driven, so their connection intervals are far more regular than human-driven traffic. BUT: software updaters, NTP clients, monitoring agents and messaging apps also produce regular traffic. This is an indicator to investigate, not evidence of compromise on its own. Check the destination's reputation and the stream content.",
+      "verification": "In Wireshark: ip.addr == 10.0.19.9 && tcp.port == 445 — look at the time column (Δtime) between connections.",
+      "evidence": [
+        "connections: 32",
+        "mean interval: 724.4s (jitter stddev 282.86s, CV 0.39)",
+        "observation window: 22458s (≈ 31 intervals)",
+        "payload size uniformity: CV 0.56 across 32 data-bearing connections"
+      ],
+      "hosts": [
+        "10.0.19.14",
+        "10.0.19.9"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2022-03-21 20:59:41.087+00:00",
+      "last_ts": "2022-03-22 03:13:59.014+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "ip.addr == 10.0.19.9 && tcp.port == 445"
+      ],
+      "mitre": [
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "regularly-timed repeated connections consistent with a C2 check-in schedule"
+        }
+      ]
+    },
+    {
+      "id": "covert.http.Host header.10.0.19.14",
+      "title": "Possible covert-channel candidate: http Host header of 10.0.19.14",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "The Host header field across 18 HTTP messages from 10.0.19.14 varies over a small alphabet (ctldl.windowsupdate.com, x1.c.lencr.org, oceriesfornot.top, r3.i.lencr.org) in a low-cardinality (4-state) repeated sequence. Mapping the values to bits and grouping 8 per byte yields 4 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, port…) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof — the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: http.host && ip.src == 10.0.19.14 — read the field of each packet in order, note the values (the engine observed: oceriesfornot.top×1, ctldl.windowsupdate.com×12, r3.i.lencr.org×1, x1.c.lencr.org×4), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: low-cardinality (4-state) repeated sequence",
+        "mapping: oceriesfornot.top→11, ctldl.windowsupdate.com→10, r3.i.lencr.org→01, x1.c.lencr.org→00",
+        "bitstream: 36 bits → 4 bytes",
+        "decoded (first 120 chars): 'J***'",
+        "printable ratio: 1.00"
+      ],
+      "hosts": [
+        "10.0.19.14"
+      ],
+      "protocol": "http",
+      "first_ts": "2022-03-21 20:58:11.116+00:00",
+      "last_ts": "2022-03-22 02:19:47.245+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "http.host && ip.src == 10.0.19.14"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1071.001",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: Web Protocols",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "covert.http.request header count.10.0.19.14",
+      "title": "Possible covert-channel candidate: http request header count of 10.0.19.14",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "The request header count field across 18 HTTP messages from 10.0.19.14 varies over a small alphabet (6, 7, 3, 4) in a low-cardinality (4-state) repeated sequence. Mapping the values to bits and grouping 8 per byte yields 4 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, port…) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof — the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: http.request && ip.src == 10.0.19.14 — read the field of each packet in order, note the values (the engine observed: 3×1, 6×12, 4×1, 7×4), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: low-cardinality (4-state) repeated sequence",
+        "mapping: 3→11, 6→10, 4→01, 7→00",
+        "bitstream: 36 bits → 4 bytes",
+        "decoded (first 120 chars): 'J***'",
+        "printable ratio: 1.00"
+      ],
+      "hosts": [
+        "10.0.19.14"
+      ],
+      "protocol": "http",
+      "first_ts": "2022-03-21 20:58:11.116+00:00",
+      "last_ts": "2022-03-22 02:19:47.245+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "http.request && ip.src == 10.0.19.14"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1071.001",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: Web Protocols",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "covert.tcp.IP ID parity.104.80.96.219",
+      "title": "Possible covert-channel candidate: tcp IP ID parity of 104.80.96.219",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "The IP ID parity field across 22 TCP messages from 104.80.96.219 varies over a small alphabet (0, 1) in a two-state repeated sequence. Mapping the values to bits and grouping 8 per byte yields 2 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, port…) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof — the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: ip.src == 104.80.96.219 — read the field of each packet in order, note the values (the engine observed: 0×15, 1×7), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: two-state repeated sequence",
+        "mapping: 0→0, 1→1",
+        "bitstream: 22 bits → 2 bytes",
+        "decoded (first 120 chars): 'ED'",
+        "printable ratio: 1.00",
+        "frames 5751–14398"
+      ],
+      "hosts": [
+        "104.80.96.219"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2022-03-21 21:54:44.352+00:00",
+      "last_ts": "2022-03-22 02:05:07.237+00:00",
+      "packet_refs": [
+        "frame 5751",
+        "frame 5754",
+        "frame 14373",
+        "frame 14398"
+      ],
+      "wireshark_filters": [
+        "ip.src == 104.80.96.219"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "covert.tcp.IP ID parity.209.197.3.8",
+      "title": "Possible covert-channel candidate: tcp IP ID parity of 209.197.3.8",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "The IP ID parity field across 16 TCP messages from 209.197.3.8 varies over a small alphabet (0, 1) in a two-state repeated sequence. Mapping the values to bits and grouping 8 per byte yields 2 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, port…) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof — the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: ip.src == 209.197.3.8 — read the field of each packet in order, note the values (the engine observed: 0×9, 1×7), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: two-state repeated sequence",
+        "mapping: 0→0, 1→1",
+        "bitstream: 16 bits → 2 bytes",
+        "decoded (first 120 chars): '+E'",
+        "printable ratio: 1.00",
+        "frames 8625–12549"
+      ],
+      "hosts": [
+        "209.197.3.8"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2022-03-21 22:29:35.280+00:00",
+      "last_ts": "2022-03-22 01:00:35.873+00:00",
+      "packet_refs": [
+        "frame 8625",
+        "frame 8628",
+        "frame 12546",
+        "frame 12549"
+      ],
+      "wireshark_filters": [
+        "ip.src == 209.197.3.8"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "covert.tcp.TCP flag set.104.80.96.219",
+      "title": "Possible covert-channel candidate: tcp TCP flag set of 104.80.96.219",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "The TCP flag set field across 22 TCP messages from 104.80.96.219 varies over a small alphabet (SA, A, PA, FA) in a low-cardinality (4-state) repeated sequence. Mapping the values to bits and grouping 8 per byte yields 5 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, port…) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof — the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: ip.src == 104.80.96.219 && tcp.flags — read the field of each packet in order, note the values (the engine observed: SA×6, A×6, PA×5, FA×5), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: low-cardinality (4-state) repeated sequence",
+        "mapping: A→00, SA→01, FA→10, PA→11",
+        "bitstream: 44 bits → 5 bytes",
+        "decoded (first 120 chars): '99NNN'",
+        "printable ratio: 1.00",
+        "frames 5751–14398"
+      ],
+      "hosts": [
+        "104.80.96.219"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2022-03-21 21:54:44.352+00:00",
+      "last_ts": "2022-03-22 02:05:07.237+00:00",
+      "packet_refs": [
+        "frame 5751",
+        "frame 5754",
+        "frame 14373",
+        "frame 14398"
+      ],
+      "wireshark_filters": [
+        "ip.src == 104.80.96.219 && tcp.flags"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "covert.tcp.TCP flag set.40.124.168.44",
+      "title": "Possible covert-channel candidate: tcp TCP flag set of 40.124.168.44",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "The TCP flag set field across 17 TCP messages from 40.124.168.44 varies over a small alphabet (PA, A, SA, FA) in a low-cardinality (4-state) repeated sequence. Mapping the values to bits and grouping 8 per byte yields 4 bytes that decode to printable-looking output (100%).",
+      "explanation": "Protocol metadata fields that the sender can freely choose (HTTP version, query type, TTL, port…) can carry hidden information by *value selection*: every packet is legal on its own, and only the sequence encodes data. This is an indicator, not proof — the same variation can occur naturally (client pools, load balancers). Judge by whether the decoded output is meaningful and whether the pattern persists. Full derivation: `netsleuth covert <pcap>`.",
+      "verification": "In Wireshark: ip.src == 40.124.168.44 && tcp.flags — read the field of each packet in order, note the values (the engine observed: SA×1, A×4, PA×11, FA×1), assign bits per the mapping and decode 8 bits per byte.",
+      "evidence": [
+        "pattern: low-cardinality (4-state) repeated sequence",
+        "mapping: SA→00, A→01, PA→10, FA→11",
+        "bitstream: 34 bits → 4 bytes",
+        "decoded (first 120 chars): 'hUVV'",
+        "printable ratio: 1.00",
+        "frames 8848–8915"
+      ],
+      "hosts": [
+        "40.124.168.44"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2022-03-21 22:42:34.543+00:00",
+      "last_ts": "2022-03-21 22:42:36.058+00:00",
+      "packet_refs": [
+        "frame 8848",
+        "frame 8851",
+        "frame 8878",
+        "frame 8915"
+      ],
+      "wireshark_filters": [
+        "ip.src == 40.124.168.44 && tcp.flags"
+      ],
+      "mitre": [
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "information encoded into protocol field choices rather than payload"
+        },
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "application/protocol metadata used as a covert data channel"
+        }
+      ]
+    },
+    {
+      "id": "scan.host.10.0.19.14.443",
+      "title": "Host sweep: 10.0.19.14 contacted 41 hosts on port 443",
+      "severity": "MEDIUM",
+      "confidence": "medium",
+      "description": "10.0.19.14 attempted connections to 41 distinct destination hosts, all on port 443 (https).",
+      "explanation": "Contacting many hosts on a single port is the signature of a host sweep looking for one vulnerable service (or of network discovery tooling). Compare with the port-scan finding: a port scan hits many ports on one host, a sweep hits one port on many hosts.",
+      "verification": "In Wireshark: ip.src == 10.0.19.14 && tcp.dstport == 443 — count the distinct ip.dst values.",
+      "evidence": [
+        "distinct destination IPs: 41",
+        "example destinations: 13.107.136.254, 13.107.246.254, 13.107.42.16, 13.69.116.104, 13.69.239.74, 13.87.188.105, 13.89.179.10, 13.89.179.9…"
+      ],
+      "hosts": [
+        "10.0.19.14"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2022-03-21 20:58:35.891+00:00",
+      "last_ts": "2022-03-22 03:17:17.352+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "ip.src == 10.0.19.14 && tcp.dstport == 443"
+      ],
+      "mitre": [
+        {
+          "technique": "T1595.001",
+          "tactic": "Reconnaissance",
+          "name": "Active Scanning: Scanning IP Blocks",
+          "why": "scanning many IP addresses on one service port"
+        }
+      ]
+    },
+    {
+      "id": "beacon.dns.10.0.19.14.ctldl.windowsupdate.com",
+      "title": "Periodic DNS queries: 10.0.19.14 → ctldl.windowsupdate.com every ~1742s",
+      "severity": "MEDIUM",
+      "confidence": "low",
+      "description": "10.0.19.14 queried ctldl.windowsupdate.com 11 times at a mean interval of 1741.5s (CV=0.50).",
+      "explanation": "Regular DNS lookups of the same name can be DNS-based C2 (queries carry no data here, but the schedule does) or plain background software behavior. Judge together with the resolved addresses and any tunneling indicators.",
+      "verification": "In Wireshark: dns.qry.name == \"ctldl.windowsupdate.com\"",
+      "evidence": [
+        "queries: 11",
+        "mean interval: 1741.5s (CV 0.50)"
+      ],
+      "hosts": [
+        "10.0.19.14"
+      ],
+      "protocol": "dns",
+      "first_ts": "2022-03-21 21:29:31.890+00:00",
+      "last_ts": "2022-03-22 02:19:47.160+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "dns.qry.name == \"ctldl.windowsupdate.com\""
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.004",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: DNS",
+          "why": "regularly scheduled DNS queries to a single domain"
+        }
+      ]
+    },
+    {
+      "id": "beacon.dns.10.0.19.14.otectagain.top",
+      "title": "Periodic DNS queries: 10.0.19.14 → otectagain.top every ~432s",
+      "severity": "MEDIUM",
+      "confidence": "low",
+      "description": "10.0.19.14 queried otectagain.top 25 times at a mean interval of 432.1s (CV=0.53).",
+      "explanation": "Regular DNS lookups of the same name can be DNS-based C2 (queries carry no data here, but the schedule does) or plain background software behavior. Judge together with the resolved addresses and any tunneling indicators.",
+      "verification": "In Wireshark: dns.qry.name == \"otectagain.top\"",
+      "evidence": [
+        "queries: 25",
+        "mean interval: 432.1s (CV 0.53)"
+      ],
+      "hosts": [
+        "10.0.19.14"
+      ],
+      "protocol": "dns",
+      "first_ts": "2022-03-22 00:21:24.394+00:00",
+      "last_ts": "2022-03-22 03:14:15.741+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "dns.qry.name == \"otectagain.top\""
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.004",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: DNS",
+          "why": "regularly scheduled DNS queries to a single domain"
+        }
+      ]
+    },
+    {
+      "id": "beacon.dns.10.0.19.14.seaskysafe.com",
+      "title": "Periodic DNS queries: 10.0.19.14 → seaskysafe.com every ~478s",
+      "severity": "MEDIUM",
+      "confidence": "low",
+      "description": "10.0.19.14 queried seaskysafe.com 23 times at a mean interval of 478.0s (CV=0.45).",
+      "explanation": "Regular DNS lookups of the same name can be DNS-based C2 (queries carry no data here, but the schedule does) or plain background software behavior. Judge together with the resolved addresses and any tunneling indicators.",
+      "verification": "In Wireshark: dns.qry.name == \"seaskysafe.com\"",
+      "evidence": [
+        "queries: 23",
+        "mean interval: 478.0s (CV 0.45)"
+      ],
+      "hosts": [
+        "10.0.19.14"
+      ],
+      "protocol": "dns",
+      "first_ts": "2022-03-22 00:20:48.299+00:00",
+      "last_ts": "2022-03-22 03:16:04.740+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "dns.qry.name == \"seaskysafe.com\""
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.004",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: DNS",
+          "why": "regularly scheduled DNS queries to a single domain"
+        }
+      ]
+    },
+    {
+      "id": "icmp.payload-channel",
+      "title": "ICMP echo requests carrying 32 bytes of data payload",
+      "severity": "MEDIUM",
+      "confidence": "low",
+      "description": "1 echo request(s) carry payloads of 32+ bytes (normal ping payloads are usually small and uniform).",
+      "explanation": "The ping protocol has no business carrying rich text/binary data. Large or varied payloads inside ICMP echo are how simple backdoors exfiltrate or beacon while slipping past port-based rules. Some monitoring tools do embed data, so read the payload before judging.",
+      "verification": "In Wireshark: icmp && data.len >= 16, then inspect the echo data field.",
+      "evidence": [
+        "example payload (32 bytes): 'abcdefghijklmnopqrstuvwabcdefghi'",
+        "10.0.19.14 → 10.0.19.9: 32 bytes"
+      ],
+      "hosts": [
+        "10.0.19.14",
+        "10.0.19.9"
+      ],
+      "protocol": "icmp",
+      "first_ts": "2022-03-21 22:05:54.644+00:00",
+      "last_ts": null,
+      "packet_refs": [],
+      "wireshark_filters": [
+        "icmp.type == 8 && data.len >= 16"
+      ],
+      "mitre": [
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "ICMP echo used as a data channel"
+        },
+        {
+          "technique": "T1048.003",
+          "tactic": "Exfiltration",
+          "name": "Exfiltration Over Unencrypted Non-C2 Protocol",
+          "why": "data moved over an unencrypted non-application protocol"
+        }
+      ]
+    },
+    {
+      "id": "beacon.tcp.10.0.19.14.10.0.19.9.135",
+      "title": "Periodic connections: 10.0.19.14 → 10.0.19.9:135 (21 connections, ~1118.1s interval)",
+      "severity": "LOW",
+      "confidence": "low",
+      "description": "10.0.19.14 connected to 10.0.19.9:135 21 times with a mean interval of 1118.1s and low timing variance (CV=0.88).",
+      "explanation": "Malware check-ins are often timer-driven, so their connection intervals are far more regular than human-driven traffic. BUT: software updaters, NTP clients, monitoring agents and messaging apps also produce regular traffic. This is an indicator to investigate, not evidence of compromise on its own. Check the destination's reputation and the stream content.",
+      "verification": "In Wireshark: ip.addr == 10.0.19.9 && tcp.port == 135 — look at the time column (Δtime) between connections.",
+      "evidence": [
+        "connections: 21",
+        "mean interval: 1118.1s (jitter stddev 984.94s, CV 0.88)",
+        "observation window: 22363s (≈ 20 intervals)",
+        "payload size uniformity: CV 0.19 across 21 data-bearing connections (sizes highly uniform)"
+      ],
+      "hosts": [
+        "10.0.19.14",
+        "10.0.19.9"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2022-03-21 20:59:39.600+00:00",
+      "last_ts": "2022-03-22 03:12:22.525+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "ip.addr == 10.0.19.9 && tcp.port == 135"
+      ],
+      "mitre": [
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "regularly-timed repeated connections consistent with a C2 check-in schedule"
+        }
+      ]
+    },
+    {
+      "id": "beacon.tcp.10.0.19.14.10.0.19.9.49667",
+      "title": "Periodic connections: 10.0.19.14 → 10.0.19.9:49667 (20 connections, ~1177.0s interval)",
+      "severity": "LOW",
+      "confidence": "low",
+      "description": "10.0.19.14 connected to 10.0.19.9:49667 20 times with a mean interval of 1177.0s and low timing variance (CV=0.83).",
+      "explanation": "Malware check-ins are often timer-driven, so their connection intervals are far more regular than human-driven traffic. BUT: software updaters, NTP clients, monitoring agents and messaging apps also produce regular traffic. This is an indicator to investigate, not evidence of compromise on its own. Check the destination's reputation and the stream content.",
+      "verification": "In Wireshark: ip.addr == 10.0.19.9 && tcp.port == 49667 — look at the time column (Δtime) between connections.",
+      "evidence": [
+        "connections: 20",
+        "mean interval: 1177.0s (jitter stddev 975.65s, CV 0.83)",
+        "observation window: 22363s (≈ 19 intervals)",
+        "payload size uniformity: CV 0.24 across 20 data-bearing connections (sizes highly uniform)"
+      ],
+      "hosts": [
+        "10.0.19.14",
+        "10.0.19.9"
+      ],
+      "protocol": "tcp",
+      "first_ts": "2022-03-21 20:59:39.602+00:00",
+      "last_ts": "2022-03-22 03:12:22.527+00:00",
+      "packet_refs": [],
+      "wireshark_filters": [
+        "ip.addr == 10.0.19.9 && tcp.port == 49667"
+      ],
+      "mitre": [
+        {
+          "technique": "T1095",
+          "tactic": "Command and Control",
+          "name": "Non-Application Layer Protocol",
+          "why": "regularly-timed repeated connections consistent with a C2 check-in schedule"
+        }
+      ]
+    },
+    {
+      "id": "dns.nx.burnincandle.com",
+      "title": "High NXDOMAIN rate for burnincandle.com (43/64)",
+      "severity": "LOW",
+      "confidence": "low",
+      "description": "43 of 64 queries under burnincandle.com returned NXDOMAIN (domain does not exist).",
+      "explanation": "Bursts of NXDOMAIN usually mean one of: a DGA (malware generating random domains to find its C2), subdomain brute-forcing, or simply broken software retrying a hard-coded name. On its own this is weak — correlate with the querying host's other activity.",
+      "verification": "In Wireshark: dns.qry.name contains \"burnincandle.com\" && dns.flags.rcode == 3",
+      "evidence": [
+        "NXDOMAIN: 43/64 queries"
+      ],
+      "hosts": [
+        "10.0.19.14",
+        "10.0.19.9"
+      ],
+      "protocol": "dns",
+      "first_ts": null,
+      "last_ts": null,
+      "packet_refs": [],
+      "wireshark_filters": [
+        "dns.qry.name contains \"burnincandle.com\" && dns.flags.rcode == 3"
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.004",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: DNS",
+          "why": "high-volume failing DNS lookups (DGA-style behavior)"
+        }
+      ]
+    },
+    {
+      "id": "dns.nx.mshome.net",
+      "title": "High NXDOMAIN rate for mshome.net (45/45)",
+      "severity": "LOW",
+      "confidence": "low",
+      "description": "45 of 45 queries under mshome.net returned NXDOMAIN (domain does not exist).",
+      "explanation": "Bursts of NXDOMAIN usually mean one of: a DGA (malware generating random domains to find its C2), subdomain brute-forcing, or simply broken software retrying a hard-coded name. On its own this is weak — correlate with the querying host's other activity.",
+      "verification": "In Wireshark: dns.qry.name contains \"mshome.net\" && dns.flags.rcode == 3",
+      "evidence": [
+        "NXDOMAIN: 45/45 queries"
+      ],
+      "hosts": [
+        "10.0.19.14",
+        "10.0.19.9"
+      ],
+      "protocol": "dns",
+      "first_ts": null,
+      "last_ts": null,
+      "packet_refs": [],
+      "wireshark_filters": [
+        "dns.qry.name contains \"mshome.net\" && dns.flags.rcode == 3"
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.004",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: DNS",
+          "why": "high-volume failing DNS lookups (DGA-style behavior)"
+        }
+      ]
+    },
+    {
+      "id": "dns.tunnel.burnincandle.com",
+      "title": "Possible DNS tunneling via burnincandle.com",
+      "severity": "LOW",
+      "confidence": "low",
+      "description": "64 queries to *.burnincandle.com show high-entropy labels (max 3.729 bits/char — consistent with encoded data, not words).",
+      "explanation": "DNS tunneling encodes data (C2 commands or exfiltrated bytes) into hostname labels — e.g. NBSWY3DPFQQFO33SNRSC65LJMQ.tunnel.example.com. The encoding forces long, high-entropy, ever-changing subdomains, which is what these signals measure. Legitimate services (CDNs, load balancers) can also generate many subdomains — check whether the labels decode to something meaningful before calling it malicious.",
+      "verification": "In Wireshark: dns.qry.name contains \"burnincandle.com\" — inspect the queried names; try Base32/Base64-decoding the left-most label of the longest ones.",
+      "evidence": [
+        "signals fired: 1",
+        "example query: wpad.burnincandle.com",
+        "example query: _ldap._tcp.Default-First-Site-Name._sites.dc._msdcs.burnincandle.com",
+        "example query: burnincandle-dc.burnincandle.com"
+      ],
+      "hosts": [
+        "10.0.19.14",
+        "10.0.19.9"
+      ],
+      "protocol": "dns",
+      "first_ts": "2022-03-21 21:06:43.730+00:00",
+      "last_ts": null,
+      "packet_refs": [],
+      "wireshark_filters": [
+        "dns.qry.name contains \"burnincandle.com\""
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.004",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: DNS",
+          "why": "DNS used as a data channel"
+        },
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "hostname labels consistent with encoded data"
+        }
+      ]
+    },
+    {
+      "id": "dns.tunnel.mshome.net",
+      "title": "Possible DNS tunneling via mshome.net",
+      "severity": "LOW",
+      "confidence": "low",
+      "description": "45 queries to *.mshome.net show high-entropy labels (max 3.729 bits/char — consistent with encoded data, not words).",
+      "explanation": "DNS tunneling encodes data (C2 commands or exfiltrated bytes) into hostname labels — e.g. NBSWY3DPFQQFO33SNRSC65LJMQ.tunnel.example.com. The encoding forces long, high-entropy, ever-changing subdomains, which is what these signals measure. Legitimate services (CDNs, load balancers) can also generate many subdomains — check whether the labels decode to something meaningful before calling it malicious.",
+      "verification": "In Wireshark: dns.qry.name contains \"mshome.net\" — inspect the queried names; try Base32/Base64-decoding the left-most label of the longest ones.",
+      "evidence": [
+        "signals fired: 1",
+        "example query: wpad.mshome.net",
+        "example query: _ldap._tcp.Default-First-Site-Name._sites.dc._msdcs.mshome.net",
+        "example query: _ldap._tcp.dc._msdcs.mshome.net"
+      ],
+      "hosts": [
+        "10.0.19.14",
+        "10.0.19.9"
+      ],
+      "protocol": "dns",
+      "first_ts": "2022-03-21 21:06:43.731+00:00",
+      "last_ts": null,
+      "packet_refs": [],
+      "wireshark_filters": [
+        "dns.qry.name contains \"mshome.net\""
+      ],
+      "mitre": [
+        {
+          "technique": "T1071.004",
+          "tactic": "Command and Control",
+          "name": "Application Layer Protocol: DNS",
+          "why": "DNS used as a data channel"
+        },
+        {
+          "technique": "T1132.001",
+          "tactic": "Command and Control",
+          "name": "Data Encoding: Standard Encoding",
+          "why": "hostname labels consistent with encoded data"
+        }
+      ]
+    }
+  ],
+  "score": {
+    "score": 96,
+    "label": "critical",
+    "breakdown": {
+      "MEDIUM": 13,
+      "LOW": 6
+    }
+  }
+}
