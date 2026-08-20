@@ -173,15 +173,21 @@ def detect_nxdomain_anomaly(result) -> list[Finding]:
         return []
     findings = []
     for st in result.dns.domain_stats.values():
-        if st.nxdomain < NXDOMAIN_BULK or st.queries == 0:
+        if st.queries == 0:
+            continue
+        min_nx = 8 if (st.nxdomain / st.queries >= 0.75) else NXDOMAIN_BULK
+        if st.nxdomain < min_nx:
             continue
         if st.nxdomain / st.queries < 0.5:
             continue
         # WPAD and DC-locator probes NXDOMAIN on every retry by design;
         # count failures only over queries that are not well-known ones
         active = _active_queries(result, st.domain)
+        if not active:
+            continue
         nx = sum(1 for q in active if q.response_code == "NXDOMAIN")
-        if not active or nx < NXDOMAIN_BULK or nx / len(active) < 0.5:
+        min_active_nx = 8 if (nx / len(active) >= 0.75) else NXDOMAIN_BULK
+        if nx < min_active_nx or nx / len(active) < 0.5:
             continue
         st_nx, st_q = nx, len(active)
         findings.append(Finding(

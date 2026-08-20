@@ -520,9 +520,15 @@ class SecretMatch:
     how: str = ""                   # how it was discovered (CTF teaching aid)
 
     def masked(self) -> str:
-        if len(self.value) <= 12:
-            return self.value
-        return self.value[:8] + "…" + self.value[-4:]
+        if not self.value:
+            return ""
+        if len(self.value) <= 4:
+            return "*" * len(self.value)
+        if len(self.value) <= 8:
+            return self.value[0] + "…" + self.value[-1]
+        if len(self.value) <= 14:
+            return self.value[:6] + "…" + self.value[-2:]
+        return self.value[:7] + "…" + self.value[-3:]
 
     def to_dict(self, reveal: bool = False) -> dict:
         return {

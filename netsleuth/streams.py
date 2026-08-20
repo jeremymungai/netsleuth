@@ -104,11 +104,14 @@ class StreamReassembler:
     """Feed TCP packets; finalize into ordered :class:`StreamData` results."""
 
     DEFAULT_LIMIT = 64 * 1024 * 1024          # per-direction buffer cap (64 MiB)
+    MAX_STREAMS = 50_000                      # max tracked streams across capture
 
-    def __init__(self, limit: int = DEFAULT_LIMIT) -> None:
+    def __init__(self, limit: int = DEFAULT_LIMIT, max_streams: int = MAX_STREAMS) -> None:
         self.limit = limit
+        self.max_streams = max_streams
         self.streams: dict[tuple, _Stream] = {}
         self.capped_streams = 0
+        self.dropped_streams = 0
 
     @staticmethod
     def _key(pkt: Packet) -> tuple:
@@ -123,6 +126,9 @@ class StreamReassembler:
         key = self._key(pkt)
         st = self.streams.get(key)
         if st is None:
+            if len(self.streams) >= self.max_streams:
+                self.dropped_streams += 1
+                return
             st = _Stream(self.limit)
             self.streams[key] = st
             st.client, st.client_port = pkt.src, pkt.sport

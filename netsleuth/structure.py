@@ -63,6 +63,12 @@ def _scan_pcap(fh) -> Structure:
         endian = ">"
     linktype = struct.unpack(endian + "I", gh[20:24])[0]
     s.linktypes = [LINKTYPES.get(linktype, f"linktype {linktype}")]
+
+    cur_pos = fh.tell()
+    fh.seek(0, 2)                      # SEEK_END
+    file_end = fh.tell()
+    fh.seek(cur_pos, 0)                # restore
+
     while True:
         ph = fh.read(16)
         if len(ph) == 0:
@@ -77,11 +83,11 @@ def _scan_pcap(fh) -> Structure:
             s.first_ts = ts
         if s.last_ts is None or ts > s.last_ts:
             s.last_ts = ts
-        data = fh.read(incl_len)
-        if len(data) < incl_len:
+        if fh.tell() + incl_len > file_end:
             s.truncated = True
             s.packet_count += 1                   # partial packet still counted as attempted
             return s
+        fh.seek(incl_len, 1)                      # SEEK_CUR (0-byte allocation)
         s.packet_count += 1
 
 

@@ -119,6 +119,15 @@ def detect_encoding(s: str) -> EncodingStep | None:
     return None
 
 
+MAX_DECOMPRESSED_STEP = 16 * 1024 * 1024        # 16 MiB decompression ceiling
+
+
+def _safe_decompress(data: bytes, wbits: int, max_size: int = MAX_DECOMPRESSED_STEP) -> bytes:
+    """Decompress with strict output size bounding to block decompression bombs."""
+    d = zlib.decompressobj(wbits)
+    return d.decompress(data, max_size)
+
+
 def decode_step(s: str, encoding: str) -> str:
     encoding = encoding.lower()
     if "url" in encoding:
@@ -128,18 +137,19 @@ def decode_step(s: str, encoding: str) -> str:
     if "base64" in encoding:
         blob = base64.b64decode(s.strip(), validate=False)
         if "gzip" in encoding:
-            blob = zlib.decompress(blob, 16 + zlib.MAX_WBITS)
+            blob = _safe_decompress(blob, 16 + zlib.MAX_WBITS)
         return blob.decode("latin-1")
     if encoding.startswith("hex"):
         blob = bytes.fromhex(s.strip())
         if "gzip" in encoding:
-            blob = zlib.decompress(blob, 16 + zlib.MAX_WBITS)
+            blob = _safe_decompress(blob, 16 + zlib.MAX_WBITS)
         return blob.decode("latin-1")
     if encoding == "gzip":
-        return zlib.decompress(s.strip().encode("latin-1"),
-                               16 + zlib.MAX_WBITS).decode("latin-1", "replace")
+        return _safe_decompress(s.strip().encode("latin-1"),
+                                16 + zlib.MAX_WBITS).decode("latin-1", "replace")
     if encoding == "zlib":
-        return zlib.decompress(s.strip().encode("latin-1")).decode("latin-1", "replace")
+        return _safe_decompress(s.strip().encode("latin-1"),
+                                zlib.MAX_WBITS).decode("latin-1", "replace")
     if encoding == "rot13":
         return codecs.decode(s, "rot_13")
     return s

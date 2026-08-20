@@ -71,6 +71,7 @@ def generate_html(result) -> str:
     score = result.score
     parts: list[str] = [f"""<!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline';">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>NetSleuth Report — {e(m.path)}</title>
 <style>{_CSS}</style></head><body><div class="wrap">

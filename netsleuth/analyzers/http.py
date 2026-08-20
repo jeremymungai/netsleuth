@@ -76,6 +76,8 @@ def _take_body(buf: bytes, start: int, headers: dict[str, str],
             size_token = buf[pos:eol].split(b";")[0].strip()
             try:
                 size = int(size_token or b"0", 16)
+                if size < 0:
+                    break
             except ValueError:
                 break
             declared += size
@@ -91,6 +93,8 @@ def _take_body(buf: bytes, start: int, headers: dict[str, str],
     if cl is not None:
         try:
             n = int(cl)
+            if n < 0:
+                return b"", 0
         except ValueError:
             return b"", 0
         return buf[start:start + n], n + 0

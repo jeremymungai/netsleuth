@@ -126,6 +126,19 @@ def _rdata_str(rr) -> str:
         rd = rr.rdata
     except Exception:
         return ""
+    if rr.type == 33:                  # SRV: "priority weight port target"
+        target = getattr(rr, "target", None)
+        port = getattr(rr, "port", None)
+        if target is not None and port is not None:
+            t_str = target.decode("latin-1", "replace") if isinstance(target, bytes) else str(target)
+            t_str = t_str.lstrip(".").rstrip(".")
+            prio = getattr(rr, "priority", 0)
+            weight = getattr(rr, "weight", 0)
+            return f"{prio} {weight} {port} {t_str}"
+        if isinstance(rd, (tuple, list)) and len(rd) >= 4:
+            prio, w, p, tgt = rd[0], rd[1], rd[2], rd[3]
+            tgt_str = tgt.decode("latin-1", "replace") if isinstance(tgt, bytes) else str(tgt)
+            return f"{prio} {w} {p} {tgt_str.lstrip('.').rstrip('.')}"
     if isinstance(rd, bytes):
         return _safe_ascii(rd, 1024)
     txt = str(rd)

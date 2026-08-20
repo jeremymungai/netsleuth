@@ -49,6 +49,7 @@ class Options:
     reveal_secrets: bool = False
     stream_buffer_limit: int = StreamReassembler.DEFAULT_LIMIT
     known_dcs: list[str] = field(default_factory=list)   # --dc overrides
+    ignored_findings: list[str] = field(default_factory=list) # --ignore / .netsleuth-ignore
 
     def wants(self, module: str) -> bool:
         return self.modules is None or module in self.modules
@@ -215,7 +216,18 @@ class Pipeline:
                 dcs.find_domain_controllers(self.result) \
                 | set(self.options.known_dcs)
             from netsleuth.detection import engine
-            self.result.findings = engine.run_detectors(self.result)
+            raw_findings = engine.run_detectors(self.result)
+            if self.options.ignored_findings:
+                import fnmatch
+                filtered = []
+                for f in raw_findings:
+                    if any(fnmatch.fnmatch(f.id, pat) or pat == f.id or pat in f.id
+                           for pat in self.options.ignored_findings):
+                        continue
+                    filtered.append(f)
+                self.result.findings = filtered
+            else:
+                self.result.findings = raw_findings
             from netsleuth.detection.scoring import score_findings
             self.result.score = score_findings(self.result.findings)
             from netsleuth.reporting.timeline import build_timeline

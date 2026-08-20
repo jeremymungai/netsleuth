@@ -21,10 +21,23 @@ Commands map one-to-one onto analysis views:
 
 from __future__ import annotations
 
+import sys
 from typing import Optional
 
 import typer
 from rich.console import Console
+
+if sys.platform == "win32":
+    if hasattr(sys.stdout, "reconfigure"):
+        try:
+            sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
+    if hasattr(sys.stderr, "reconfigure"):
+        try:
+            sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+        except Exception:
+            pass
 
 console_out = Console()
 err_console = Console(stderr=True)
@@ -48,6 +61,9 @@ REVEAL = typer.Option(False, "--reveal", help="Show masked secrets/passwords.")
 VERBOSE = typer.Option(False, "--verbose", "-v", help="Full evidence in output.")
 AS_JSON = typer.Option(False, "--json", help="Emit JSON instead of tables.")
 QUIET = typer.Option(False, "--quiet", "-q", help="Suppress progress/notes.")
+DC_OPT = typer.Option([], "--dc", help="Known Domain Controller IP (repeatable).")
+IGNORE_OPT = typer.Option([], "--ignore", "--exclude",
+                          help="Suppress finding ID or glob pattern (repeatable).")
 
 
 def _err_exit(msg: str, code: int = 2) -> None:
@@ -57,12 +73,28 @@ def _err_exit(msg: str, code: int = 2) -> None:
 
 def _run(pcap: str, modules: Optional[set[str]], max_packets: int = 0,
          rules: Optional[str] = None, extract_dir: Optional[str] = None,
-         show_progress: bool = True, known_dcs: Optional[list[str]] = None):
-    """Shared pipeline driver with progress reporting."""
+         show_progress: bool = True, known_dcs: Optional[list[str]] = None,
+         ignore: Optional[list[str]] = None):
+    """Shared pipeline driver with progress reporting and finding suppression."""
     rules_paths = [rules] if rules else []
+    ignored = list(ignore or [])
+    from pathlib import Path
+    for cfg in (Path(".netsleuth-ignore.yaml"), Path(".netsleuth-ignore.yml"), Path(".netsleuth-ignore")):
+        if cfg.is_file():
+            try:
+                import yaml
+                data = yaml.safe_load(cfg.read_text(encoding="utf-8"))
+                if isinstance(data, list):
+                    ignored.extend(str(x) for x in data)
+                elif isinstance(data, dict) and "ignore" in data:
+                    ignored.extend(str(x) for x in data["ignore"])
+            except Exception:
+                pass
+
     opts = Options(modules=modules, max_packets=max_packets,
                    rules_paths=rules_paths, extract_dir=extract_dir,
-                   known_dcs=known_dcs or [])
+                   known_dcs=known_dcs or [],
+                   ignored_findings=ignored)
 
     status = None
     if not QUIET and console_out.is_terminal:
@@ -266,12 +298,10 @@ def detect(pcap: str = typer.Argument(...),
            rules: Optional[str] = RULES_OPT,
            max_packets: int = MAX_PACKETS, as_json: bool = AS_JSON,
            verbose: bool = VERBOSE,
-           dc: list[str] = typer.Option([], "--dc",
-                                        help="Domain controller IP (repeatable). "
-                                             "Periodic DC traffic on 88/135/389/445/636 "
-                                             "is then not flagged as beaconing.")):
+           dc: list[str] = DC_OPT,
+           ignore: list[str] = IGNORE_OPT):
     """Run the detection engine: findings, evidence, risk score."""
-    res = _run(pcap, None, max_packets, rules, known_dcs=dc)
+    res = _run(pcap, None, max_packets, rules, known_dcs=dc, ignore=ignore)
     if as_json:
         import json
         console_out.print_json(json.dumps(
@@ -289,9 +319,10 @@ def timeline(pcap: str = typer.Argument(...),
              kind: str = typer.Option(None, "--kind", help="dns|http|tls|tcp|file|detection."),
              severity: str = typer.Option(None, "--severity",
                                           help="Minimum severity LOW|MEDIUM|HIGH|CRITICAL."),
-             limit: int = typer.Option(80)):
+             limit: int = typer.Option(80),
+             ignore: list[str] = IGNORE_OPT):
     """Chronological investigation timeline."""
-    res = _run(pcap, None, max_packets)
+    res = _run(pcap, None, max_packets, ignore=ignore)
     from netsleuth.reporting.timeline import filter_events
     events = filter_events(res.events, host=host, kind=kind, min_severity=severity)
     if as_json:
@@ -310,9 +341,11 @@ def report(pcap: str = typer.Argument(...),
            output: str = typer.Option(None, "--output", "-o",
                                       help="Output file (default: <pcap>.<fmt>)."),
            rules: Optional[str] = RULES_OPT,
-           max_packets: int = MAX_PACKETS, reveal: bool = REVEAL):
+           max_packets: int = MAX_PACKETS, reveal: bool = REVEAL,
+           dc: list[str] = DC_OPT,
+           ignore: list[str] = IGNORE_OPT):
     """Full investigation report (exec summary, findings, timeline, filters)."""
-    res = _run(pcap, None, max_packets, rules)
+    res = _run(pcap, None, max_packets, rules, known_dcs=dc, ignore=ignore)
     from netsleuth.reporting.reports import write_report
     out = output or f"{pcap}.{fmt}"
     try:
@@ -327,10 +360,10 @@ def analyze(pcap: str = typer.Argument(...),
             rules: Optional[str] = RULES_OPT,
             max_packets: int = MAX_PACKETS, verbose: bool = VERBOSE,
             reveal: bool = REVEAL,
-            dc: list[str] = typer.Option([], "--dc",
-                                         help="Domain controller IP (repeatable).")):
+            dc: list[str] = DC_OPT,
+            ignore: list[str] = IGNORE_OPT):
     """Guided 11-step investigation: overview → findings → Wireshark filters."""
-    res = _run(pcap, None, max_packets, rules, known_dcs=dc)
+    res = _run(pcap, None, max_packets, rules, known_dcs=dc, ignore=ignore)
     from netsleuth.reporting import console as rc
     rc.render_analyze(res, console_out, verbose=verbose, reveal=reveal)
 
@@ -340,7 +373,9 @@ def covert(pcap: str = typer.Argument(...),
            max_packets: int = MAX_PACKETS,
            as_json: bool = AS_JSON,
            no_explain: bool = typer.Option(False, "--no-explain",
-                                           help="Skip the educational block.")):
+                                           help="Skip the educational block."),
+           dc: list[str] = DC_OPT,
+           ignore: list[str] = IGNORE_OPT):
     """Protocol-metadata covert-channel analysis (generic field engine).
 
     Finds fields whose values vary systematically across repeated
@@ -349,7 +384,7 @@ def covert(pcap: str = typer.Argument(...),
     bitstreams, and reports the full derivation — evidence, never
     verdicts.
     """
-    res = _run(pcap, None, max_packets)
+    res = _run(pcap, None, max_packets, known_dcs=dc, ignore=ignore)
     if as_json:
         import json
         console_out.print_json(json.dumps(

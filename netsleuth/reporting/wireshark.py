@@ -9,6 +9,10 @@ the guided analysis prints as its final step.
 from __future__ import annotations
 
 
+def _esc(s: str) -> str:
+    return str(s).replace("\\", "\\\\").replace('"', '\\"')
+
+
 def companion_filters(result, max_hosts: int = 10) -> list[tuple[str, list[str]]]:
     """Grouped display filters for the capture's key entities."""
     groups: list[tuple[str, list[str]]] = []
@@ -34,7 +38,7 @@ def companion_filters(result, max_hosts: int = 10) -> list[tuple[str, list[str]]
         for st in sorted(result.dns.domain_stats.values(),
                          key=lambda s: -s.queries)[:5]:
             if st.queries >= 3:
-                suspicious_domains.append(f'dns.qry.name contains "{st.domain}"')
+                suspicious_domains.append(f'dns.qry.name contains "{_esc(st.domain)}"')
     if suspicious_domains:
         groups.append(("Top queried domains", suspicious_domains))
 
@@ -44,13 +48,13 @@ def companion_filters(result, max_hosts: int = 10) -> list[tuple[str, list[str]]
                        [f"tcp.stream == {i}" for i in cred_streams[:8]]))
 
     if result.http:
-        posts = [f'http.request.method == "{t.method}"'
+        posts = [f'http.request.method == "{_esc(t.method)}"'
                  for t in result.http if t.method in ("POST", "PUT")]
         if posts:
             groups.append(("State-changing HTTP requests", posts[:1]))
         downloads = [t for t in result.http
                      if t.status == 200 and t.resp_body_len > 0][:6]
-        dl = [f'http.request.full_uri contains "{t.path}"' for t in downloads
+        dl = [f'http.request.full_uri contains "{_esc(t.path)}"' for t in downloads
               if t.path not in ("/",)]
         if dl:
             groups.append(("File downloads over HTTP", dl))

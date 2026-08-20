@@ -113,7 +113,7 @@ class _Writer:
             name = f"{self._counter:04d}_{i}_{base}"
         self._names.add(name)
         target = (self.dir / name).resolve()
-        if not str(target).startswith(str(self.dir) + os.sep):
+        if not target.is_relative_to(self.dir):
             raise RuntimeError("path traversal blocked")        # defense in depth
         target.write_bytes(data)
         self.written += len(data)
